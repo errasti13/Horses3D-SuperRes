@@ -1,0 +1,16 @@
+True		#Simulation
+8 		#Number of layers
+50		#Number of epochs
+128		#Batch size	
+0		#Nmin LO
+100 		#Nmax LO
+1		#NSkip LO
+0		#Nmin HO
+800		#Nmax HO
+4		#NSkip HO
+0.9000		#Train percentage
+momentum	#Equations
+3	        #LO Polynomial
+8		#HO Polynomial
+True		#Trained Model
+
