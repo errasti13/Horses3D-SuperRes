@@ -10,7 +10,7 @@ from keras.layers import (
 )
 from keras.models import Sequential, load_model
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from scipy.interpolate import interpn
+
 import matplotlib.pyplot as plt
 
 from NEURALNET.SRCNN_utils import *
@@ -23,11 +23,12 @@ if physical_devices:
 
 def main():
 
-    print("#####################################################")
-    print("##        SRCNN Method has been selected           ##")
-    print("#####################################################")
-
     config_nn = read_nn_config_file("NEURALNET/config_nn.dat")
+    selected_architecture = config_nn.architecture
+
+    print("#####################################################")
+    print(f"##        {selected_architecture} Method has been selected           ##")
+    print("#####################################################")
 
     if config_nn.simulation == 'False':
         print("SOLVING HO SOLUTION")
@@ -58,17 +59,34 @@ def main():
         I_train, O_train, I_test, O_test = split_train_test_data(I, O, config_nn.train_percentage)
 
         # Model creation and training
-        srcnn_model = create_cnn_model(I_train.shape[1:], config_nn.n_layers)
-        tloss, vloss, training_history = train_model(srcnn_model, I_train, O_train, I_test, O_test, config_nn.batch_size, config_nn.n_epochs)
+        if selected_architecture == 'SRCNN':
+            srcnn_model = create_cnn_model(I_train.shape[1:], config_nn.n_layers)
+            tloss, vloss, training_history = train_cnn_model(srcnn_model, I_train, O_train, I_test, O_test, 
+                                                         config_nn.batch_size, config_nn.n_epochs)
+        elif selected_architecture == 'SRGAN':
+            pass
+        else:
+            print("Invalid architecture selected.")
+            return
+
+    #Load pre-trained model
+    if selected_architecture == 'SRCNN':
+        srcnn_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRCNN")
+
+        num_iterations = 400
+        Q_HO_sol, L2_Error =calculate_and_print_errors(srcnn_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
+
+        np.save("RESULTS/Q_HO_SRCNN.npy", Q_HO_sol)
+        np.save("RESULTS/L2_Error_SRCNN.npy", L2_Error)
+
+    elif selected_architecture == 'SRGAN':
+        pass
     else:
-        #Load pre-trained model
-        srcnn_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_h5_SRCNN")
+        print("Invalid architecture selected.")
+        return
+        
 
-    num_iterations = 50
-    Q_HO_sol, L2_Error =calculate_and_print_errors(srcnn_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
 
-    np.save("RESULTS/Q_HO_SRCNN.npy", Q_HO_sol)
-    np.save("RESULTS/L2_Error.npy", L2_Error)
     
 
 if __name__ == "__main__":

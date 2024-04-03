@@ -10,7 +10,7 @@ from keras.layers import (
 )
 from keras.models import Sequential, load_model
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from scipy.interpolate import interpn
+
 import matplotlib.pyplot as plt
 
 class storage():
@@ -18,7 +18,7 @@ class storage():
     
 class NNConfig:
     def __init__(self, simulation, n_layers, n_epochs, batch_size, nmin_lo, nmax_lo, nskip_lo,
-                 nmin_ho, nmax_ho, nskip_ho, train_percentage, equations, lo_polynomial, ho_polynomial, trained_model):
+                 nmin_ho, nmax_ho, nskip_ho, train_percentage, equations, lo_polynomial, ho_polynomial, trained_model, architecture):
         self.simulation = simulation
         self.n_layers = n_layers
         self.n_epochs = n_epochs
@@ -34,6 +34,7 @@ class NNConfig:
         self.lo_polynomial = lo_polynomial
         self.ho_polynomial = ho_polynomial
         self.trained_model = trained_model
+        self.architecture = architecture
 
 def read_nn_config_file(filepath):
     NN_opt = []
@@ -56,10 +57,11 @@ def read_nn_config_file(filepath):
     lo_polynomial = int(NN_opt[12].split('\t')[0])
     ho_polynomial = int(NN_opt[13].split('\t')[0])
     trained_model = NN_opt[14].split('\t')[0]
+    architecture = NN_opt[15].split('\t')[0]
 
     return NNConfig(
         simulation, n_layers, n_epochs, batch_size, nmin_lo, nmax_lo, nskip_lo,
-        nmin_ho, nmax_ho, nskip_ho, train_percentage, equations, lo_polynomial, ho_polynomial, trained_model
+        nmin_ho, nmax_ho, nskip_ho, train_percentage, equations, lo_polynomial, ho_polynomial, trained_model, architecture
     )
 def Q_from_file_2(fname):  
     v1 = np.fromfile(fname, dtype=np.int32, count=2, sep='', offset=136)
@@ -212,46 +214,19 @@ def Q_SelectEquations(Q_full,Eq):
     
     return Q
 
+def Read_experiment(Name, Nmin, Nmax, NSkip, Eq, lo_polynomial, Network_type):
+    Q_full = Q_from_experiment(Name, Nmin, Nmax, NSkip)
+    Q = Q_SelectEquations(Q_full, Eq)
 
-
-def Read_experiment(Name,Nmin,Nmax,NSkip,Eq,lo_polynomial, Network_type):
-    
-    Q_full = Q_from_experiment(Name,Nmin,Nmax,NSkip)
-    
-    
-    #print("Qfull",Q_full[1,1,0,0,0,0])
-    
-    Q = Q_SelectEquations(Q_full,Eq)          # First index: Temporal iteration. 2 index: Number of elements, 3 index Equation index, 4 - 6: x, y, z component
-
-    #print("Qfull 2",Q[1,1,0,0,0,0])
-    
-    k = 0
-    
     N_of_elements = Q.shape[1]
-    
-    if (Network_type == "MLP"):
 
-        Q_res = np.zeros(( 1, Q.shape[0]*Q.shape[1], Q.shape[2]*Q.shape[3]*Q.shape[4]*Q.shape[5] ))
-        for i in range(0,Q.shape[0]):
-            for j in range(0,Q.shape[1]):
-                Q_res[0,k,:] = Q[i,j,:,:,:].reshape(Q_res.shape[2],order='F')
-                k = k + 1
-
-
-
-    elif (Network_type == "CNN"):
-        
-        Q = np.transpose(Q, axes=(0,1,3,4,5,2))
-
-        Q_res = np.zeros((Q.shape[0]*Q.shape[1],lo_polynomial+1,lo_polynomial+1,lo_polynomial+1,3))
-        k = 0
-        for i in range(0,Q.shape[0]):
-            for j in range(0,Q.shape[1]):
-                Q_res[k,:,:,:,:] = Q[i,j,:,:,:,:]
-                k = k + 1
+    if Network_type == "MLP":
+        Q_res = Q.reshape((1, -1, Q.shape[2] * Q.shape[3] * Q.shape[4] * Q.shape[5]), order='F')
+    elif Network_type == "CNN":
+        Q = np.transpose(Q, axes=(0, 1, 3, 4, 5, 2))
+        Q_res = Q.reshape((-1, lo_polynomial + 1, lo_polynomial + 1, lo_polynomial + 1, 3))
     else:
-        print("Not implemented")
-    
+        print("Network type not implemented")
 
     return Q_res, N_of_elements
 
@@ -437,7 +412,7 @@ def create_cnn_model(input_shape, num_layers):
     return model
 
 
-def train_model(model, I_train, O_train, I_test, O_test, batch_size, num_epochs):
+def train_cnn_model(model, I_train, O_train, I_test, O_test, batch_size, num_epochs):
     """
     Trains a given model using the provided training data.
 
@@ -454,8 +429,8 @@ def train_model(model, I_train, O_train, I_test, O_test, batch_size, num_epochs)
         tuple: A tuple containing training and validation loss histories,
                and the history object.
     """
-    overfit_callback = EarlyStopping(monitor='loss', patience=8)
-    callback = ReduceLROnPlateau(monitor="loss", factor=0.2, patience=10, min_delta=1e-3)
+    overfit_callback = EarlyStopping(monitor='loss', patience=80)
+    callback = ReduceLROnPlateau(monitor="loss", factor=0.2, patience=100, min_delta=1e-3)
 
     history = model.fit(
         I_train,
@@ -469,8 +444,7 @@ def train_model(model, I_train, O_train, I_test, O_test, batch_size, num_epochs)
     tloss = history.history['loss']
     vloss = history.history['val_loss']
 
-    model.save("NEURALNET/nns/MyModel_SRCNN", save_format='tf')
-    model.save("NEURALNET/nns/MyModel_h5_SRCNN", save_format='h5')
+    model.save("NEURALNET/nns/MyModel_SRCNN")
     
     return tloss, vloss, history
 
@@ -486,39 +460,38 @@ def calculate_and_print_errors(model, num_iterations, Eq, LO_Polynomial, HO_Poly
         LO_Polynomial (int): LO polynomial value.
         HO_Polynomial (int): HO polynomial value.
     """
-    Q_HO_predict = np.zeros([num_iterations, 512, HO_Polynomial + 1, HO_Polynomial + 1, HO_Polynomial + 1, 3])
-    Q_HO_sol = np.zeros([num_iterations, 512, HO_Polynomial + 1, HO_Polynomial + 1, HO_Polynomial + 1, 3])
+    Q_HO_predict = np.zeros((num_iterations, 512, HO_Polynomial + 1, HO_Polynomial + 1, HO_Polynomial + 1, 3))
+    Q_HO_sol = np.zeros_like(Q_HO_predict)
     L2_Error = []
 
     for i in range(num_iterations):
-        
-        print('')
-        print("ITERACION", i + 1, "/", num_iterations)
+        print(f'\nITERACION {i + 1} / {num_iterations}')
 
-        # Load and preprocess data
+        # Load and preprocess data for LO and HO
         Q_LO_ind, _ = Read_experiment("RESULTS/TGV_LO_", i, i + 1, 1, Eq, LO_Polynomial, "CNN")
         Q_HO_ind, _ = Read_experiment("RESULTS/TGV_HO_", 4 * i, 4 * i + 1, 1, Eq, HO_Polynomial, "CNN")
         I = normalize_and_matrix_4d_predict(Q_LO_ind, 'Q_LO')
         O = normalize_and_matrix_4d_predict(Q_HO_ind, 'Q_HO')
 
-        # Predict and denormalize
-        Q_HO_predict[i, :, :, :, :, :] = model.predict(I, verbose=0)
-        Q_HO_sol[i, :, :, :, :, :] = denormalize_and_matrix_4d(Q_HO_predict[i, :, :, :, :, :], 'Q_HO')
+        # Predict HO and denormalize
+        Q_HO_predict[i] = model.predict(I, verbose=0)
+        Q_HO_sol[i] = denormalize_and_matrix_4d(Q_HO_predict[i], 'Q_HO')
 
         # Calculate L2 error
-        l2_error = np.linalg.norm(Q_HO_predict[i, :, :, :, :, 0] - O[:, :, :, :, 0]) / np.linalg.norm(O[:, :, :, :, 0])
+        l2_error = np.linalg.norm(Q_HO_predict[i][..., 0] - O[..., 0]) / np.linalg.norm(O[..., 0])
         L2_Error.append(l2_error)
 
         # Print information
-        print('Normalized min and max values for predicted HO:', np.amax(Q_HO_predict), np.amin(Q_HO_predict))
-        print('Normalized min and max values for real HO:', np.amax(O), np.amin(O))
-        print("Min and max values for predicted HO:", np.amax(Q_HO_sol), np.amin(Q_HO_sol))
-        print("Min and max values for real HO:", np.amax(Q_HO_ind), np.amin(Q_HO_ind))
+        print('Normalized min and max values for predicted HO:', Q_HO_predict[i].min(), Q_HO_predict[i].max())
+        print('Normalized min and max values for real HO:', O.min(), O.max())
+        print("Min and max values for predicted HO:", Q_HO_sol[i].min(), Q_HO_sol[i].max())
+        print("Min and max values for real HO:", Q_HO_ind.min(), Q_HO_ind.max())
         print("L2 norm:", l2_error)
 
     plot_heatmap_and_errors(Q_LO_ind, Q_HO_ind, Q_HO_sol, L2_Error)
 
     return Q_HO_sol, L2_Error
+
 
 def plot_heatmap_and_errors(Q_LO_ind, Q_HO_ind, Q_HO_sol, L2_Error):
     fig, ax = plt.subplots(3, 3)
