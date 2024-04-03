@@ -64,7 +64,8 @@ def main():
             tloss, vloss, training_history = train_cnn_model(srcnn_model, I_train, O_train, I_test, O_test, 
                                                          config_nn.batch_size, config_nn.n_epochs)
         elif selected_architecture == 'SRGAN':
-            pass
+            srgan, generator, discriminator = create_srgan_model(I_train.shape[1:], config_nn.n_layers)
+            training_history = train_srgan(srgan, generator, discriminator, I_train, O_train, config_nn.batch_size, config_nn.n_epochs, I_test, O_test)
         else:
             print("Invalid architecture selected.")
             return
@@ -80,7 +81,13 @@ def main():
         np.save("RESULTS/L2_Error_SRCNN.npy", L2_Error)
 
     elif selected_architecture == 'SRGAN':
-        pass
+        srgan_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRGAN")
+
+        num_iterations = 400
+        Q_HO_sol, L2_Error =calculate_and_print_errors(srgan_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
+
+        np.save("RESULTS/Q_HO_SRCNN.npy", Q_HO_sol)
+        np.save("RESULTS/L2_Error_SRCNN.npy", L2_Error)
     else:
         print("Invalid architecture selected.")
         return
