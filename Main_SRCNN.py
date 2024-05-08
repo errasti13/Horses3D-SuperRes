@@ -2,24 +2,12 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from keras.layers import (
-    BatchNormalization, Conv3D, Conv3DTranspose, InputLayer, ReLU,
-    Input, UpSampling3D, Flatten, Dense, Reshape, MaxPooling3D, Dropout
-)
-from keras.models import Sequential, load_model
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
-import matplotlib.pyplot as plt
+from NEURALNET.src.SRCNN_utils import *
+from NEURALNET.src.horses3d import *
+from NEURALNET.src.cnn import *
+from NEURALNET.src.gan import *
 
-from NEURALNET.SRCNN_utils import *
-
-# Set TensorFlow to use GPU memory growth (if available)
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if physical_devices:
-    for device in physical_devices:
-        tf.config.experimental.set_memory_growth(device, True)
 
 def main():
 
@@ -74,7 +62,7 @@ def main():
     if selected_architecture == 'SRCNN':
         srcnn_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRCNN")
 
-        num_iterations = 400
+        num_iterations = 4
         Q_HO_sol, L2_Error =calculate_and_print_errors(srcnn_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
 
         np.save("RESULTS/Q_HO_SRCNN.npy", Q_HO_sol)
@@ -83,18 +71,14 @@ def main():
     elif selected_architecture == 'SRGAN':
         srgan_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRGAN")
 
-        num_iterations = 400
-        Q_HO_sol, L2_Error =calculate_and_print_errors(srgan_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
+        num_iterations = 4
+        Q_HO_sol, L2_Error = calculate_and_print_errors(srgan_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
 
-        np.save("RESULTS/Q_HO_SRCNN.npy", Q_HO_sol)
-        np.save("RESULTS/L2_Error_SRCNN.npy", L2_Error)
+        np.save("RESULTS/Q_HO_SRGAN.npy", Q_HO_sol)
+        np.save("RESULTS/L2_Error_SRGAN.npy", L2_Error)
     else:
         print("Invalid architecture selected.")
         return
         
-
-
-    
-
 if __name__ == "__main__":
     main()
