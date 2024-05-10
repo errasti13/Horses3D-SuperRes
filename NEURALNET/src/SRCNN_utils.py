@@ -5,8 +5,6 @@ import numpy as np
 
 from NEURALNET.src.horses3d import *
 from NEURALNET.src.plot import *
-
-import time
     
 class NNConfig:
     def __init__(self, simulation, n_layers, n_epochs, batch_size, nmin_lo, nmax_lo, nskip_lo,
@@ -205,7 +203,7 @@ def split_train_test_data(I, O, Train_percentage):
     return I_train, O_train, I_test, O_test
 
 
-def calculate_and_print_errors(model, num_iterations, Eq, LO_Polynomial, HO_Polynomial):
+def calculate_and_print_errors(model, num_iterations, Eq, config_nn):
     """
     Calculate and print errors for a given model and data.
 
@@ -217,16 +215,17 @@ def calculate_and_print_errors(model, num_iterations, Eq, LO_Polynomial, HO_Poly
         LO_Polynomial (int): LO polynomial value.
         HO_Polynomial (int): HO polynomial value.
     """
-    Q_HO_predict = np.zeros((num_iterations, 512, HO_Polynomial + 1, HO_Polynomial + 1, HO_Polynomial + 1, 3))
+    Q_HO_predict = np.zeros((num_iterations, 512, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, 3))
     Q_HO_sol = np.zeros_like(Q_HO_predict)
     L2_Error = []
 
-    for i in range(num_iterations):
+    for i in range(400):
         print(f'\nITERACION {i + 1} / {num_iterations}')
 
         # Load and preprocess data for LO and HO
-        Q_LO_ind, _ = Read_experiment("RESULTS/TGV_LO_", i, i + 1, 1, Eq, LO_Polynomial, "CNN")
-        Q_HO_ind, _ = Read_experiment("RESULTS/TGV_HO_", 4 * i, 4 * i + 1, 1, Eq, HO_Polynomial, "CNN")
+        Q_LO_ind, _ = Read_experiment("RESULTS/TGV_LO_", config_nn.nmin_lo + i*config_nn.nskip_lo, config_nn.nmin_lo + (i+1)*config_nn.nskip_lo, 1, Eq, config_nn.lo_polynomial, "CNN")
+        Q_HO_ind, _ = Read_experiment("RESULTS/TGV_HO_", config_nn.nmin_ho + i*config_nn.nskip_ho, config_nn.nmin_ho + (i+1)*config_nn.nskip_ho, config_nn.nskip_ho, Eq, config_nn.ho_polynomial, "CNN")
+
         I = normalize_and_matrix_4d_predict(Q_LO_ind, 'Q_LO')
         O = normalize_and_matrix_4d_predict(Q_HO_ind, 'Q_HO')
 

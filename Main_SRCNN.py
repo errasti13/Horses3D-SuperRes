@@ -62,8 +62,8 @@ def main():
     if selected_architecture == 'SRCNN':
         srcnn_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRCNN")
 
-        num_iterations = 4
-        Q_HO_sol, L2_Error =calculate_and_print_errors(srcnn_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
+        num_iterations = 400
+        Q_HO_sol, L2_Error =calculate_and_print_errors(srcnn_model, num_iterations, Eq, config_nn)
 
         np.save("RESULTS/Q_HO_SRCNN.npy", Q_HO_sol)
         np.save("RESULTS/L2_Error_SRCNN.npy", L2_Error)
@@ -71,8 +71,8 @@ def main():
     elif selected_architecture == 'SRGAN':
         srgan_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRGAN")
 
-        num_iterations = 4
-        Q_HO_sol, L2_Error = calculate_and_print_errors(srgan_model, num_iterations, Eq, config_nn.lo_polynomial, config_nn.ho_polynomial)
+        num_iterations = 400
+        Q_HO_sol, L2_Error = calculate_and_print_errors(srgan_model, num_iterations, Eq, config_nn)
 
         np.save("RESULTS/Q_HO_SRGAN.npy", Q_HO_sol)
         np.save("RESULTS/L2_Error_SRGAN.npy", L2_Error)
