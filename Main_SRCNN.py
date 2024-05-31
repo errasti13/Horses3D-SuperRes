@@ -3,7 +3,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import numpy as np
 
-from NEURALNET.src.SRCNN_utils import *
+from NEURALNET.src.SuperRes_utils import *
 from NEURALNET.src.horses3d import *
 from NEURALNET.src.cnn import *
 from NEURALNET.src.gan import *
@@ -57,6 +57,9 @@ def main():
         else:
             print("Invalid architecture selected.")
             return
+        
+        del Q_HO_ind, Q_LO_ind, I, O, MaxValues_LO, MinValues_LO, MaxValues_FO, MinValues_FO, A_lo, a_lo, A_fo, a_fo
+        del I_train, O_train, I_test, O_test, tloss, vloss, training_history
 
     #Load pre-trained model
     if selected_architecture == 'SRCNN':
