@@ -13,8 +13,14 @@ Before running the code, ensure you have the following installed:
 - NEURALNET Python package
 - Horses3D CFD solver
 
-## Installation
+## Authors
 
-1. Clone this repository to your local machine:
+- [Jon Errasti](https://github.com/errasti13)
 
-git clone https://github.com/your-username/horses3d-super-resolution.git
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+   
+
+
