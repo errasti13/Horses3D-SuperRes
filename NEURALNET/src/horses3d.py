@@ -138,20 +138,9 @@ def Q_from_experiment(Name,Nmin,Nmax,NSkip):
            
     return Q
 
-def Q_SelectEquations(Q_full,Eq):   
- 
-    Q = np.zeros(( Q_full.shape[0],Q_full.shape[1],len(Eq),Q_full.shape[3],Q_full.shape[4],Q_full.shape[5] ))
-    
-    for i in range(0,len(Eq)):
-        Q[:,:,i,:,:,:] = Q_full[:,:,Eq[i],:,:,:]
-        # print(i)
-        # for j in range(0,Q_full.shape[0]):
-        #     for k in range(0,Q_full.shape[1]):
-        #         for l in range(0,Q_full.shape[3]):
-        #             for m in range(0,Q_full.shape[4]):
-        #                 for n in range(0,Q_full.shape[5]):
-        #                     Q[j,k,i,l,m,n] = Q_full[j,k,Eq[i],l,m,n]
-    
+def Q_SelectEquations(Q_full, Eq):   
+
+    Q = np.take(Q_full, Eq, axis=2)
     return Q
 
 def Read_experiment(Name, Nmin, Nmax, NSkip, Eq, lo_polynomial, Network_type):

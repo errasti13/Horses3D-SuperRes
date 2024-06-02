@@ -65,8 +65,8 @@ def set_equations(config_nn):
         list: A list of equation numbers based on the configuration.
     """
     equation_sets = {
-    'momentum': [2, 3, 4],
-    'all': [1, 2, 3, 4, 5]
+    'momentum': [1, 2, 3],
+    'all': [0, 1, 2, 3, 4]
     }
 
     return equation_sets.get(config_nn.equations, [])
@@ -171,8 +171,6 @@ def normalize_and_matrix_4d_predict(Q, Name):
 
     return Qnew
 
-
-
 def split_train_test_data(I, O, Train_percentage):
     """
     Splits the input and output data into training and testing sets.
@@ -201,82 +199,3 @@ def split_train_test_data(I, O, Train_percentage):
     O_test = O[IndexTest]
     
     return I_train, O_train, I_test, O_test
-
-
-def calculate_and_print_errors(model, num_iterations, Eq, config_nn):
-    """
-    Calculate and print errors for a given model and data.
-
-    Args:
-        model (tf.keras.Model): The trained model for prediction.
-        GN: Your GN module (assuming it's imported or defined elsewhere).
-        num_iterations (int): Number of iterations.
-        Eq: Your Eq variable (assuming it's defined elsewhere).
-        LO_Polynomial (int): LO polynomial value.
-        HO_Polynomial (int): HO polynomial value.
-    """
-    Q_HO_predict = np.zeros((num_iterations, 512, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, 3))
-    Q_HO_sol = np.zeros_like(Q_HO_predict)
-    L2_Error = []
-
-    for i in range(400):
-        print(f'\nITERACION {i + 1} / {num_iterations}')
-
-        # Load and preprocess data for LO and HO
-        Q_LO_ind, _ = Read_experiment("RESULTS/TGV_LO_", config_nn.nmin_lo + i*config_nn.nskip_lo, config_nn.nmin_lo + (i+1)*config_nn.nskip_lo, 1, Eq, config_nn.lo_polynomial, "CNN")
-        Q_HO_ind, _ = Read_experiment("RESULTS/TGV_HO_", config_nn.nmin_ho + i*config_nn.nskip_ho, config_nn.nmin_ho + (i+1)*config_nn.nskip_ho, config_nn.nskip_ho, Eq, config_nn.ho_polynomial, "CNN")
-
-        I = normalize_and_matrix_4d_predict(Q_LO_ind, 'Q_LO')
-        O = normalize_and_matrix_4d_predict(Q_HO_ind, 'Q_HO')
-
-        # Predict HO and denormalize
-        Q_HO_predict[i] = model.predict(I, verbose=0)
-        Q_HO_sol[i] = denormalize_and_matrix_4d(Q_HO_predict[i], 'Q_HO')
-
-        # Calculate L2 error
-        l2_error = np.linalg.norm(Q_HO_predict[i][..., 0] - O[..., 0]) / np.linalg.norm(O[..., 0])
-        L2_Error.append(l2_error)
-
-        # Print information
-        print('Normalized min and max values for predicted HO:', Q_HO_predict[i].min(), Q_HO_predict[i].max())
-        print('Normalized min and max values for real HO:', O.min(), O.max())
-        print("Min and max values for predicted HO:", Q_HO_sol[i].min(), Q_HO_sol[i].max())
-        print("Min and max values for real HO:", Q_HO_ind.min(), Q_HO_ind.max())
-        print("L2 norm:", l2_error)
-
-    return Q_HO_sol, L2_Error
-
-
-def reconstruct_field(Q, ho_polynomial):
-    """
-    Reconstructs a field using higher-order polynomial expansion.
-
-    Args:
-        Q (numpy.ndarray): Input tensor of shape (N, 512, M, M, M, 3), where N is the number of samples.
-        ho_polynomial (int): Degree of the higher-order polynomial.
-
-    Returns:
-        numpy.ndarray: Reconstructed field tensor of shape (N, 8*(ho_polynomial+1), 8*(ho_polynomial+1), 8*(ho_polynomial+1), 3).
-    """
-    # Calculate the number of coefficients in each dimension
-    num_coeffs = ho_polynomial + 1
-
-    # Define the shape of the reconstructed field
-    field_shape = (8 * num_coeffs, 8 * num_coeffs, 8 * num_coeffs, 3)
-    
-    # Initialize the result tensor
-    Q_res = np.zeros(field_shape)
-   
-    eID = 0
-    for x in range(8):
-        for y in range(8):
-                for z in range(8):
-                    # Assign the corresponding segment of Q to Q_res
-                    element = np.transpose(Q[eID, :, :, :, :], (2, 1, 0, 3))
-                    Q_res[x * (ho_polynomial+1):(x+1) * (ho_polynomial + 1), 
-                        y * (ho_polynomial+1):(y+1) * (ho_polynomial + 1) , 
-                        z * (ho_polynomial+1):(z+1) * (ho_polynomial + 1), 
-                        :] = element
-                    eID += 1
-
-    return Q_res

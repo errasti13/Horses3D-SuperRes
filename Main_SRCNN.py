@@ -59,7 +59,7 @@ def main():
             return
         
         del Q_HO_ind, Q_LO_ind, I, O, MaxValues_LO, MinValues_LO, MaxValues_FO, MinValues_FO, A_lo, a_lo, A_fo, a_fo
-        del I_train, O_train, I_test, O_test, tloss, vloss, training_history
+        del I_train, O_train, I_test, O_test, training_history
 
     #Load pre-trained model
     if selected_architecture == 'SRCNN':
