@@ -95,7 +95,28 @@ def main():
         I, O = load_and_normalize_data(config_nn, Eq)
         I_train, O_train, I_test, O_test = split_train_test_data(I, O, config_nn.train_percentage)
 
+<<<<<<< HEAD
         train_model(selected_architecture, I_train, O_train, I_test, O_test, config_nn)
+=======
+        # Model creation and training
+        if selected_architecture == 'SRCNN':
+            srcnn_model = create_cnn_model(I_train.shape[1:], config_nn.n_layers)
+            tloss, vloss, training_history = train_cnn_model(srcnn_model, I_train, O_train, I_test, O_test, 
+                                                         config_nn.batch_size, config_nn.n_epochs)
+        elif selected_architecture == 'SRGAN':
+            srgan, generator, discriminator = create_srgan_model(I_train.shape[1:], config_nn.n_layers)
+            training_history = train_srgan(srgan, generator, discriminator, I_train, O_train, config_nn.batch_size, config_nn.n_epochs, I_test, O_test)
+        else:
+            print("Invalid architecture selected.")
+            return
+        
+        del Q_HO_ind, Q_LO_ind, I, O, MaxValues_LO, MinValues_LO, MaxValues_FO, MinValues_FO, A_lo, a_lo, A_fo, a_fo
+        del I_train, O_train, I_test, O_test, training_history
+
+    #Load pre-trained model
+    if selected_architecture == 'SRCNN':
+        srcnn_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRCNN")
+>>>>>>> 7b6c70484ef6cf62cee1fc38d337897eba6be43c
 
         del I, O, I_train, O_train, I_test, O_test
     

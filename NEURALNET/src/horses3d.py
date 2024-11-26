@@ -104,6 +104,7 @@ def Q_from_file(fname):
     return Sol
 
 
+<<<<<<< HEAD
 def Q_from_experiment(Name, Nmin, Nmax, NSkip):
     Names = [f"{Name}{i:010d}.hsol" for i in range(Nmin, Nmax, NSkip)]
 
@@ -120,6 +121,12 @@ def Q_from_experiment(Name, Nmin, Nmax, NSkip):
 def Q_SelectEquations(Q_full, Eq):
     return Q_full[:, :, Eq, :, :, :]
 
+=======
+def Q_SelectEquations(Q_full, Eq):   
+
+    Q = np.take(Q_full, Eq, axis=2)
+    return Q
+>>>>>>> 7b6c70484ef6cf62cee1fc38d337897eba6be43c
 
 def Read_experiment(Name, Nmin, Nmax, NSkip, Eq, lo_polynomial, Network_type):
     Q_full = Q_from_experiment(Name, Nmin, Nmax, NSkip)

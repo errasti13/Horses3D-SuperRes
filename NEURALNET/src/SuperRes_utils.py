@@ -65,8 +65,8 @@ def set_equations(config_nn):
         list: A list of equation numbers based on the configuration.
     """
     equation_sets = {
-    'momentum': [2, 3, 4],
-    'all': [1, 2, 3, 4, 5]
+    'momentum': [1, 2, 3],
+    'all': [0, 1, 2, 3, 4]
     }
 
     return equation_sets.get(config_nn.equations, [])
@@ -171,8 +171,6 @@ def normalize_and_matrix_4d_predict(Q, Name):
 
     return Qnew
 
-
-
 def split_train_test_data(I, O, Train_percentage):
     """
     Splits the input and output data into training and testing sets.
@@ -201,6 +199,7 @@ def split_train_test_data(I, O, Train_percentage):
     O_test = O[IndexTest]
     
     return I_train, O_train, I_test, O_test
+<<<<<<< HEAD
 
 
 def calculate_and_print_errors(model, num_iterations, Eq, config_nn):
@@ -285,3 +284,5 @@ def reconstruct_field(Q, ho_polynomial):
                     eID += 1
 
     return Q_res
+=======
+>>>>>>> 7b6c70484ef6cf62cee1fc38d337897eba6be43c
