@@ -9,6 +9,12 @@ from NEURALNET.src.horses3d import *
 from NEURALNET.src.cnn import *
 from NEURALNET.src.gan import *
 
+physical_devices = tf.config.list_physical_devices('GPU')
+if physical_devices:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+else:
+    print("No GPU detected, running on CPU.")
+
 def solve_horses3d(config_nn):
     if config_nn.simulation == 'False':
         print("SOLVING HO SOLUTION")
@@ -17,7 +23,7 @@ def solve_horses3d(config_nn):
         os.system('./horses3d.ns TaylorGreen_LO.control > RESULTS/TGV_LO.log')
         print("LO SOLUTION HAS BEEN SOLVED. HORSES3D IS NO LONGER NEEDED.")
 
-        return
+    return
 
 
 def load_and_normalize_data(config_nn, Eq):
@@ -44,14 +50,16 @@ def train_model(selected_architecture, I_train, O_train, I_test, O_test, config_
         training_history = train_cnn_model(
             model, I_train, O_train, I_test, O_test, config_nn.batch_size, config_nn.n_epochs
         )
+        return
     elif selected_architecture == 'SRGAN':
         srgan, generator, discriminator = create_srgan_model(I_train.shape[1:], config_nn.n_layers)
         training_history = train_srgan(
             srgan, generator, discriminator, I_train, O_train, config_nn.batch_size, config_nn.n_epochs, I_test, O_test
         )
+        return
     else:
         raise ValueError("Invalid architecture selected.")
-    return model, training_history
+    
 
 
 def load_pretrained_model(selected_architecture):
@@ -87,11 +95,11 @@ def main():
         I, O = load_and_normalize_data(config_nn, Eq)
         I_train, O_train, I_test, O_test = split_train_test_data(I, O, config_nn.train_percentage)
 
-        model, training_history = train_model(selected_architecture, I_train, O_train, I_test, O_test, config_nn)
+        train_model(selected_architecture, I_train, O_train, I_test, O_test, config_nn)
 
-        del I, O, I_train, O_train, I_test, O_test, training_history
-    else:
-        model = load_pretrained_model(selected_architecture)
+        del I, O, I_train, O_train, I_test, O_test
+    
+    model = load_pretrained_model(selected_architecture)
 
     calculate_and_save_results(model, selected_architecture, num_iterations=400, Eq=Eq, config_nn=config_nn)
 

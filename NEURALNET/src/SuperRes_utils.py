@@ -209,42 +209,47 @@ def calculate_and_print_errors(model, num_iterations, Eq, config_nn):
 
     Args:
         model (tf.keras.Model): The trained model for prediction.
-        GN: Your GN module (assuming it's imported or defined elsewhere).
         num_iterations (int): Number of iterations.
-        Eq: Your Eq variable (assuming it's defined elsewhere).
-        LO_Polynomial (int): LO polynomial value.
-        HO_Polynomial (int): HO polynomial value.
+        Eq: Equation variable for the experiment (assumed defined externally).
+        config_nn: Configuration object containing hyperparameters.
+    Returns:
+        np.ndarray: High-order solution array.
+        list: L2 error values for each iteration.
     """
-    Q_HO_predict = np.zeros((num_iterations, 512, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, 3))
-    Q_HO_sol = np.zeros_like(Q_HO_predict)
+    Q_HO_sol = np.zeros(
+        (num_iterations, 512, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, config_nn.ho_polynomial + 1, 3),
+        dtype=np.float32
+    )
     L2_Error = []
 
-    for i in range(400):
-        print(f'\nITERACION {i + 1} / {num_iterations}')
+    for i in range(num_iterations):
+        print(f'\nIteration {i + 1}/{num_iterations}')
 
-        # Load and preprocess data for LO and HO
-        Q_LO_ind, _ = Read_experiment("RESULTS/TGV_LO_", config_nn.nmin_lo + i*config_nn.nskip_lo, config_nn.nmin_lo + (i+1)*config_nn.nskip_lo, 1, Eq, config_nn.lo_polynomial, "CNN")
-        Q_HO_ind, _ = Read_experiment("RESULTS/TGV_HO_", config_nn.nmin_ho + i*config_nn.nskip_ho, config_nn.nmin_ho + (i+1)*config_nn.nskip_ho, config_nn.nskip_ho, Eq, config_nn.ho_polynomial, "CNN")
+        lo_start = config_nn.nmin_lo + i * config_nn.nskip_lo
+        lo_end = config_nn.nmin_lo + (i + 1) * config_nn.nskip_lo
+        ho_start = config_nn.nmin_ho + i * config_nn.nskip_ho
+        ho_end = config_nn.nmin_ho + (i + 1) * config_nn.nskip_ho
+
+        Q_LO_ind, _ = Read_experiment("RESULTS/TGV_LO_", lo_start, lo_end, 1, Eq, config_nn.lo_polynomial, "CNN")
+        Q_HO_ind, _ = Read_experiment("RESULTS/TGV_HO_", ho_start, ho_end, config_nn.nskip_ho, Eq, config_nn.ho_polynomial, "CNN")
 
         I = normalize_and_matrix_4d_predict(Q_LO_ind, 'Q_LO')
         O = normalize_and_matrix_4d_predict(Q_HO_ind, 'Q_HO')
 
-        # Predict HO and denormalize
-        Q_HO_predict[i] = model.predict(I, verbose=0)
-        Q_HO_sol[i] = denormalize_and_matrix_4d(Q_HO_predict[i], 'Q_HO')
+        Q_HO_predict = model.predict(I, verbose=0)
+        Q_HO_sol[i] = denormalize_and_matrix_4d(Q_HO_predict, 'Q_HO')
 
-        # Calculate L2 error
-        l2_error = np.linalg.norm(Q_HO_predict[i][..., 0] - O[..., 0]) / np.linalg.norm(O[..., 0])
+        l2_error = np.linalg.norm(Q_HO_predict[..., 0] - O[..., 0]) / np.linalg.norm(O[..., 0])
         L2_Error.append(l2_error)
 
-        # Print information
-        print('Normalized min and max values for predicted HO:', Q_HO_predict[i].min(), Q_HO_predict[i].max())
-        print('Normalized min and max values for real HO:', O.min(), O.max())
-        print("Min and max values for predicted HO:", Q_HO_sol[i].min(), Q_HO_sol[i].max())
-        print("Min and max values for real HO:", Q_HO_ind.min(), Q_HO_ind.max())
-        print("L2 norm:", l2_error)
+        print(f'L2 norm error: {l2_error:.6f}')
+        print(f'Predicted HO (normalized) range: {Q_HO_predict.min():.6f}, {Q_HO_predict.max():.6f}')
+        print(f'Real HO (normalized) range: {O.min():.6f}, {O.max():.6f}')
+        print(f'Predicted HO (denormalized) range: {Q_HO_sol[i].min():.6f}, {Q_HO_sol[i].max():.6f}')
+        print(f'Real HO (raw) range: {Q_HO_ind.min():.6f}, {Q_HO_ind.max():.6f}')
 
     return Q_HO_sol, L2_Error
+
 
 
 def reconstruct_field(Q, ho_polynomial):
