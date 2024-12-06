@@ -30,6 +30,7 @@ def load_and_normalize_data(config_nn, Eq):
     Q_HO_ind, _ = Read_experiment(
         "RESULTS/TGV_HO_", config_nn.nmin_ho, config_nn.nmax_ho, config_nn.nskip_ho, Eq, config_nn.ho_polynomial, "CNN"
     )
+    
     Q_LO_ind, _ = Read_experiment(
         "RESULTS/TGV_LO_", config_nn.nmin_lo, config_nn.nmax_lo, config_nn.nskip_lo, Eq, config_nn.lo_polynomial, "CNN"
     )
@@ -61,7 +62,6 @@ def train_model(selected_architecture, I_train, O_train, I_test, O_test, config_
         raise ValueError("Invalid architecture selected.")
     
 
-
 def load_pretrained_model(selected_architecture):
     if selected_architecture == 'SRCNN':
         return tf.keras.models.load_model("NEURALNET/nns/MyModel_SRCNN")
@@ -70,15 +70,27 @@ def load_pretrained_model(selected_architecture):
     else:
         raise ValueError("Invalid architecture selected.")
 
-
 def calculate_and_save_results(model, selected_architecture, num_iterations, Eq, config_nn):
+    variables = ['rhou', 'rhov', 'rhow']
     Q_HO_sol, L2_Error = calculate_and_print_errors(model, num_iterations, Eq, config_nn)
     results_prefix = "SRCNN" if selected_architecture == 'SRCNN' else "SRGAN"
-    np.save(f"RESULTS/Q_HO_{results_prefix}.npy", Q_HO_sol)
-    np.save(f"RESULTS/L2_Error_{results_prefix}.npy", L2_Error)
+
+    for i, variable in enumerate(variables):
+        try:
+            filename = f"RESULTS/Q_HO_{results_prefix}_{variable}.npy"
+            np.save(filename, Q_HO_sol[..., i])
+            print(f"Saved {variable} to {filename}")
+        except Exception as e:
+            print(f"Error saving {variable}: {e}")
+
+    try:
+        error_filename = f"RESULTS/L2_Error_{results_prefix}.npy"
+        np.save(error_filename, L2_Error)
+        print(f"Saved L2_Error to {error_filename}")
+    except Exception as e:
+        print(f"Error saving L2_Error: {e}")
 
     return
-
 
 def main():
     config_nn = read_nn_config_file("NEURALNET/config_nn.dat")
@@ -95,34 +107,13 @@ def main():
         I, O = load_and_normalize_data(config_nn, Eq)
         I_train, O_train, I_test, O_test = split_train_test_data(I, O, config_nn.train_percentage)
 
-<<<<<<< HEAD
         train_model(selected_architecture, I_train, O_train, I_test, O_test, config_nn)
-=======
-        # Model creation and training
-        if selected_architecture == 'SRCNN':
-            srcnn_model = create_cnn_model(I_train.shape[1:], config_nn.n_layers)
-            tloss, vloss, training_history = train_cnn_model(srcnn_model, I_train, O_train, I_test, O_test, 
-                                                         config_nn.batch_size, config_nn.n_epochs)
-        elif selected_architecture == 'SRGAN':
-            srgan, generator, discriminator = create_srgan_model(I_train.shape[1:], config_nn.n_layers)
-            training_history = train_srgan(srgan, generator, discriminator, I_train, O_train, config_nn.batch_size, config_nn.n_epochs, I_test, O_test)
-        else:
-            print("Invalid architecture selected.")
-            return
         
-        del Q_HO_ind, Q_LO_ind, I, O, MaxValues_LO, MinValues_LO, MaxValues_FO, MinValues_FO, A_lo, a_lo, A_fo, a_fo
-        del I_train, O_train, I_test, O_test, training_history
+        del I_train, O_train, I_test, O_test, I, O
 
-    #Load pre-trained model
-    if selected_architecture == 'SRCNN':
-        srcnn_model = tf.keras.models.load_model("NEURALNET/nns/MyModel_SRCNN")
->>>>>>> 7b6c70484ef6cf62cee1fc38d337897eba6be43c
-
-        del I, O, I_train, O_train, I_test, O_test
-    
     model = load_pretrained_model(selected_architecture)
 
-    calculate_and_save_results(model, selected_architecture, num_iterations=400, Eq=Eq, config_nn=config_nn)
+    calculate_and_save_results(model, selected_architecture, num_iterations=1000, Eq=Eq, config_nn=config_nn)
 
     return
 
