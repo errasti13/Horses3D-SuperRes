@@ -6,8 +6,8 @@ import os
 
 def plot_error(srcnn, srgan):
     """Plot the error comparison between SRCNN and SRGAN models."""
-    time_srcnn = np.linspace(5, 5 + len(srcnn) * 0.002, len(srcnn))
-    time_srgan = np.linspace(5, 5 + len(srgan) * 0.002, len(srgan))
+    time_srcnn = np.linspace(5, 5 + len(srcnn) * 0.001, len(srcnn))
+    time_srgan = np.linspace(5, 5 + len(srgan) * 0.001, len(srgan))
 
     fig, ax = plt.subplots(figsize=(8, 6))
 
@@ -40,6 +40,7 @@ def plot_error(srcnn, srgan):
 
 def plot_reconstructed(mesh, Q_HO_sol, Q_HO_SRCNN, Q_HO_SRGAN, idx, component='rhou'):
     """Plot the reconstructed flow fields for a given component."""
+    
     component_map = {'rhou': 0, 'rhov': 1, 'rhow': 2}
 
     if component not in component_map:
@@ -50,13 +51,13 @@ def plot_reconstructed(mesh, Q_HO_sol, Q_HO_SRCNN, Q_HO_SRGAN, idx, component='r
     fig, axes = plt.subplots(1, 3, figsize=(18, 6), subplot_kw={'projection': '3d'})
 
     titles = ['Original', 'SRCNN', 'SRGAN']
-    datasets = [Q_HO_sol, Q_HO_SRCNN[idx], Q_HO_SRGAN[idx]]
+    datasets = [Q_HO_sol, Q_HO_SRCNN, Q_HO_SRGAN]
 
     mesh_flat = mesh.reshape(-1, 3)
     x, y, z = mesh_flat[:, 0], mesh_flat[:, 1], mesh_flat[:, 2]
 
     for i, (ax, dataset) in enumerate(zip(axes, datasets)):
-        data_flat = dataset[..., comp_idx].reshape(-1)
+        data_flat = dataset.reshape(-1)
         scatter = ax.scatter(x, y, z, c=data_flat, cmap='jet')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')

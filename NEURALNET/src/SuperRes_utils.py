@@ -199,8 +199,6 @@ def split_train_test_data(I, O, Train_percentage):
     O_test = O[IndexTest]
     
     return I_train, O_train, I_test, O_test
-<<<<<<< HEAD
-
 
 def calculate_and_print_errors(model, num_iterations, Eq, config_nn):
     """
@@ -248,41 +246,3 @@ def calculate_and_print_errors(model, num_iterations, Eq, config_nn):
         print(f'Real HO (raw) range: {Q_HO_ind.min():.6f}, {Q_HO_ind.max():.6f}')
 
     return Q_HO_sol, L2_Error
-
-
-
-def reconstruct_field(Q, ho_polynomial):
-    """
-    Reconstructs a field using higher-order polynomial expansion.
-
-    Args:
-        Q (numpy.ndarray): Input tensor of shape (N, 512, M, M, M, 3), where N is the number of samples.
-        ho_polynomial (int): Degree of the higher-order polynomial.
-
-    Returns:
-        numpy.ndarray: Reconstructed field tensor of shape (N, 8*(ho_polynomial+1), 8*(ho_polynomial+1), 8*(ho_polynomial+1), 3).
-    """
-    # Calculate the number of coefficients in each dimension
-    num_coeffs = ho_polynomial + 1
-
-    # Define the shape of the reconstructed field
-    field_shape = (8 * num_coeffs, 8 * num_coeffs, 8 * num_coeffs, 3)
-    
-    # Initialize the result tensor
-    Q_res = np.zeros(field_shape)
-   
-    eID = 0
-    for x in range(8):
-        for y in range(8):
-                for z in range(8):
-                    # Assign the corresponding segment of Q to Q_res
-                    element = np.transpose(Q[eID, :, :, :, :], (2, 1, 0, 3))
-                    Q_res[x * (ho_polynomial+1):(x+1) * (ho_polynomial + 1), 
-                        y * (ho_polynomial+1):(y+1) * (ho_polynomial + 1) , 
-                        z * (ho_polynomial+1):(z+1) * (ho_polynomial + 1), 
-                        :] = element
-                    eID += 1
-
-    return Q_res
-=======
->>>>>>> 7b6c70484ef6cf62cee1fc38d337897eba6be43c
