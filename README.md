@@ -25,15 +25,9 @@ This project implements advanced machine learning techniques for high-fidelity f
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/fluid-dynamics-superres.git
-   cd fluid-dynamics-superres
+   git clone https://github.com/errasti13/Horses3D-SuperRes.git
+   cd Horses3D-SuperRes
    ```
-
-2. Install required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
 ## Configuration
 
 Configure your neural network parameters in `NEURALNET/config_nn.dat`. Key configuration options include:
@@ -48,7 +42,7 @@ Configure your neural network parameters in `NEURALNET/config_nn.dat`. Key confi
 Run the main script:
 
 ```bash
-python main.py
+python Main.py
 ```
 
 The script will:
@@ -69,17 +63,18 @@ The script generates:
 ```
 ├── NEURALNET/
 │   ├── src/
-│   │   ├── SuperRes_utils.py
-│   │   ├── horses3d.py
-│   │   ├── cnn.py
-│   │   └── gan.py
-│   ├── config_nn.dat
+│   │   ├── SuperRes_utils.py    # Utility functions for super-resolution
+│   │   ├── horses3d.py          # Simulation-related utilities
+│   │   ├── cnn.py               # Convolutional Neural Network implementations
+│   │   └── gan.py               # GAN model implementations
+│   ├── config_nn.dat            # Neural network configuration file
 │   └── nns/
-│       ├── MyModel_SRCNN/
-│       └── MyModel_SRGAN/
+│       ├── MyModel_SRCNN/       # Saved SRCNN model
+│       └── MyModel_SRGAN/       # Saved SRGAN model
 ├── RESULTS/
-│   └── solution files
-└── Main.py
+│   └── solution files           # Simulation and reconstruction results
+├── Main.py                      # Primary simulation and training script
+└── PostProcess.py               # Script for analyzing and visualizing results
 ```
 
 ## Supported Flow Variables
@@ -105,17 +100,4 @@ Contributions are welcome! Please submit pull requests or open issues to discuss
 
 ## License
 
-[Add your project's license here]
-
-## Citation
-
-If you use this work in academic research, please cite:
-[Add citation information if applicable]
-
-## Acknowledgments
-
-[Add any acknowledgments or credits]
-
-   
-
-
+Distributed under the MIT License. See LICENSE file for more information.
