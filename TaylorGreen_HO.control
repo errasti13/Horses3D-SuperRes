@@ -1,23 +1,25 @@
 Flow equations        = "NS"
 mesh file name        = "../../TestMeshes/TaylorGreen8.mesh"
-restart file name     = "RESULTS/TGV.rst"
-solution file name    = "RESULTS/TGV.rst"
-restart               = .false.
+restart file name     = "RESULTS/TGV_HO_0000050000.hsol"
+solution file name    = "RESULTS/TGV_HO.rst"
+restart               = .true.
 
 autosave mode = "iteration"
-autosave interval = 4
+autosave interval = 5
 
 Polynomial order      = 8
 
-Number of time steps  = 2000
+Number of time steps  = 5000
 Output Interval       = 1
+
+LES model = "Smagorinsky"
 
 Number of plot points = 2
 Convergence tolerance = 1.d-10
 
 #cfl                   = 0.4
 #dcfl                  = 0.4
-dt                     = 0.0005
+dt                     = 0.0002
 
 mach number            = 0.08
 Reynolds number        = 1600.0
